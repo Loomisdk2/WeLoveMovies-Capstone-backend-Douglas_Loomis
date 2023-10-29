@@ -1,5 +1,6 @@
 exports.up = function (knex) {
   return knex.schema.createTable("movies_theaters", (table) => {
+    table.increments("movies_theaters").primary();
     table.increments("movie_id").unsigned();
     table.integer("theater_id").unsigned();
     table.boolean("is_showing").defaultTo(false);
