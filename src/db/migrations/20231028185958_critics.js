@@ -1,9 +1,11 @@
 exports.up = function (knex) {
   return knex.schema.createTable("critics", (table) => {
-    table.increments("critic_id").primary();
-    table.string("preferred_name").notNullable();
-    table.string("surname").notNullable();
-    table.string("organization_name").notNullable();
+    table.increments("movie_id").primary();
+    table.string("title").notNullable();
+    table.integer("runtime_in_minutes").notNullable();
+    table.string("rating").notNullable();
+    table.text("description").notNullable();
+    table.string("image_url").notNullable();
     table.timestamp(true, true);
   });
 };
