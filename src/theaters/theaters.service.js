@@ -1,19 +1,27 @@
-const knex = require("../db/connection"); // Adjust the path as needed
+const knex = require("../db/connection");
+const reduceProperties = require("../utils/reduce-properties");
 
-function getAllTheatersWithMovies() {
+const reduceMovies = reduceProperties("theater_id", {
+  movie_id: ["movies", null, "movie_id"],
+  title: ["movies", null, "title"],
+  rating: ["movies", null, "rating"],
+  image_url: ["movies", null, "image_url"],
+  runtime_in_minutes: ["movies", null, "runtime_in_minutes"],
+});
+
+async function getAllTheatersAndMovies() {
   return knex("theaters as t")
-    .leftJoin("movies_theaters as mt", "t.theater_id", "mt.theater_id")
-    .leftJoin("movies as m", "mt.movie_id", "m.movie_id")
-    .then((theaters) => {
-      return theaters; // Return data from your database
-    });
+    .join("movies_theaters as mt", "t.theater_id", "mt.theater_id")
+    .join("movies as m", "mt.movie_id", "m.movie_id")
+    .select("*")
+    .then(reduceMovies);
 }
 
-function list() {
+async function list() {
   return knex("theaters").select("*");
 }
 
 module.exports = {
   list,
-  getAllTheatersWithMovies,
+  getAllTheatersAndMovies,
 };

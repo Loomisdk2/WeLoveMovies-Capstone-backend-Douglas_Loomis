@@ -1,6 +1,8 @@
 const moviesService = require("./movies.service");
 const knex = require("../db/connection.js");
+const asyncErrorBoundary = require("../errors/asyncErrorBoundary");
 
+// Middleware
 async function movieExists(req, res, next) {
   const movie = await moviesService.read(req.params.movieId);
   if (movie) {
@@ -10,24 +12,22 @@ async function movieExists(req, res, next) {
   next({ status: 404, message: "Movie cannot be found." });
 }
 
+// Route handler functions
 async function list(req, res) {
   const { is_showing } = req.query;
-
-  if (is_showing === "true") {
-    const movies = await moviesService.listShowingMovies();
-    res.json({ data: movies });
-  } else {
-    const movies = await moviesService.list();
-    res.json({ data: movies });
-  }
+  const movies =
+    is_showing === "true"
+      ? await moviesService.listMoviesShowing()
+      : await moviesService.list();
+  res.json({ data: movies });
 }
 
-function read(req, res, next) {
+async function read(req, res, next) {
   const { movie: data } = res.locals;
   res.json({ data });
 }
 
-function listTheaters(req, res) {
+async function listTheaters(req, res) {
   const { movieId } = req.params;
 
   knex("theaters as t")
@@ -45,7 +45,7 @@ function listTheaters(req, res) {
     });
 }
 
-function listMovieReviews(req, res) {
+async function listReviews(req, res) {
   const { movieId } = req.params;
 
   knex("reviews as r")
@@ -67,13 +67,13 @@ function listMovieReviews(req, res) {
       console.error(err);
       res
         .status(500)
-        .json({ error: "An error occurred while fetching movie reviews." });
+        .json({ error: "An error occurred while fetching movies." });
     });
 }
 
 module.exports = {
-  list,
-  read: [movieExists, read],
+  list: asyncErrorBoundary(list),
+  read: [movieExists, asyncErrorBoundary(read)],
   listTheaters,
-  listMovieReviews,
+  listReviews,
 };

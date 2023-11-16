@@ -1,8 +1,12 @@
 const reviewsService = require("./reviews.service");
+const asyncErrorBoundary = require("../errors/asyncErrorBoundary");
+const knex = require("../db/connection");
 
+// Constants
 const VALID_PROPERTIES = ["content", "score"];
 
-function hasOnlyValidProperties(req, res, next) {
+// Middlewares and validation functions
+function hasValidProperties(req, res, next) {
   const { data = {} } = req.body;
 
   const invalidFields = Object.keys(data).filter(
@@ -15,6 +19,11 @@ function hasOnlyValidProperties(req, res, next) {
     });
   }
   next();
+}
+
+// Database operations functions
+async function list() {
+  return knex("theaters").select("*");
 }
 
 async function create(req, res, next) {
@@ -31,24 +40,16 @@ async function reviewExists(req, res, next) {
   next({ status: 404, message: "Review cannot be found." });
 }
 
-async function update(req, res) {
-  const { reviewId } = req.params;
-  const { content, score } = req.body;
-
-  // Prepare the updated review
+async function update(req, res, next) {
   const updatedReview = {
     ...res.locals.review,
     ...req.body.data,
     review_id: res.locals.review.review_id,
   };
 
-  // Update the review
   const updated = await reviewsService.update(updatedReview);
 
-  // Fetch the critic details
   const critic = await reviewsService.readCritic(updatedReview.review_id);
-
-  // Include critic details in the response
 
   res.json({ data: critic });
 }
@@ -60,12 +61,17 @@ async function destroy(req, res) {
 }
 
 async function read(req, res) {
-  res.json({ data: res.locals.review });
+  res.status(200).json({ data: res.locals.review });
 }
 
 module.exports = {
-  create,
-  read: [reviewExists, read],
-  update: [hasOnlyValidProperties, reviewExists, update],
-  delete: [reviewExists, destroy],
+  list: [asyncErrorBoundary(list)],
+  create: [asyncErrorBoundary(hasValidProperties), asyncErrorBoundary(create)],
+  read: [asyncErrorBoundary(reviewExists), asyncErrorBoundary(read)],
+  update: [
+    asyncErrorBoundary(hasValidProperties),
+    asyncErrorBoundary(reviewExists),
+    asyncErrorBoundary(update),
+  ],
+  delete: [asyncErrorBoundary(reviewExists), asyncErrorBoundary(destroy)],
 };
