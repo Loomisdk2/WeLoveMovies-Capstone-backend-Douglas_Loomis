@@ -2,10 +2,8 @@ const reviewsService = require("./reviews.service");
 const asyncErrorBoundary = require("../errors/asyncErrorBoundary");
 const knex = require("../db/connection");
 
-// Constants
 const VALID_PROPERTIES = ["content", "score"];
 
-// Middlewares and validation functions
 function hasValidProperties(req, res, next) {
   const { data = {} } = req.body;
 
@@ -21,7 +19,6 @@ function hasValidProperties(req, res, next) {
   next();
 }
 
-// Database operations functions
 async function list() {
   return knex("theaters").select("*");
 }
