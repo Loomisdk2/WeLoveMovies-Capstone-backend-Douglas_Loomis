@@ -4,7 +4,7 @@ exports.up = function (knex) {
     table.string("preferred_name").notNullable();
     table.string("surname").notNullable();
     table.string("organization_name").notNullable();
-    table.timestamp(true, true);
+    table.timestamps(true, true);
   });
 };
 
